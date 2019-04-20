@@ -1,0 +1,36 @@
+---
+- name: Copy the code from repository
+  git: 
+    repo: "{{ repository }}" 
+    version: "{{ webapp_version }}" 
+    dest: "/var/www/html/app"
+    force: yes
+
+- name: Install packages 
+  apt:
+    name: ['python-pip', 'libapache2-mod-python', 'python-mysqldb', 'screen']
+    update_cache: true
+    state: present
+
+- name: Install rpython requirements
+  pip:
+    requirements: "/var/www/html/app/requirements.txt"
+
+- name: Replace python file
+  replace:
+    dest: /var/www/html/app/app.py
+    regexp: 'host="redis"'
+    replace: host="{{ hostvars['ansible-redis']['ansible_default_ipv4']['address'] }}"
+
+- name: Change directory mode
+  file:
+    path: /var/www/html/app
+    state: directory
+    mode: 0755
+
+- name: Start my web server
+  command: /usr/bin/screen -d -m sudo python /var/www/html/app/app.py
+  async: true
+  poll: 0 
+  environment:
+    NAME: "Aperture science computer aided enrichment center"

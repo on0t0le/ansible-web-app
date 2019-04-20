@@ -1,0 +1,29 @@
+---
+# This role contains common plays that will run on all nodes.
+- name: Update packages
+  apt:
+    update_cache: yes
+    upgrade: "yes"
+    cache_valid_time: 86400
+    force_apt_get: yes
+  tags: upgrade
+
+- name: Install new packages
+  apt: 
+    name: ['ntp', 'mc', 'htop', 'nagios-nrpe-plugin', 'nagios-plugins-standard']
+    update_cache: true
+    state: present
+
+- name: Configure ntp file
+  template: 
+    src: ntp.conf.j2 
+    dest: /etc/ntp.conf
+  tags: ntp
+  notify: restart ntp
+
+- name: Start the ntp service
+  service: 
+    name: ntp
+    state: started 
+    enabled: yes
+  tags: ntp

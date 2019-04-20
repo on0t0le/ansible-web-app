@@ -1,0 +1,74 @@
+---
+# This will install nagios
+- name: Install Nagios4-common repository
+  apt:
+    deb: http://ftp.ru.debian.org/debian/pool/main/n/nagios4/nagios4-common_4.3.4-3_all.deb
+    dpkg_options: 'force-confold,force-confdef'
+
+- name: Install Nagios4-core repository
+  apt:
+    deb: http://ftp.ru.debian.org/debian/pool/main/n/nagios4/nagios4-core_4.3.4-3_amd64.deb
+    dpkg_options: 'force-confold,force-confdef'
+
+- name: Install Nagios-cgi repository
+  apt:
+    deb: http://ftp.ru.debian.org/debian/pool/main/n/nagios4/nagios4-cgi_4.3.4-3_amd64.deb
+    dpkg_options: 'force-confold,force-confdef'
+- name: Install Nagios repository
+  apt:
+    deb: http://ftp.ru.debian.org/debian/pool/main/n/nagios4/nagios4_4.3.4-3_amd64.deb
+    dpkg_options: 'force-confold,force-confdef'
+
+- name: Fix auth module errors 
+  command: a2enmod "{{ item }}"
+  with_items:
+    - auth_digest
+    - authz_groupfile
+
+- name: install nagios
+  apt: 
+    name: ['nagios-nrpe-server', 'nagios-nrpe-plugin', 'nagios-plugins-standard']
+    update_cache: true
+    state: present
+  notify: restart apache2
+
+- name: create nagios config dir
+  file: 
+    path: /etc/nagios4/ansible-managed 
+    state: directory
+
+- name: configure nagios
+  copy: 
+    src: nagios.cfg 
+    dest: /etc/nagios4/nagios.cfg
+  notify: restart nagios
+
+- name: configure localhost monitoring
+  copy: 
+    src: localhost.cfg 
+    dest: /etc/nagios4/objects/localhost.cfg
+  notify: restart nagios
+
+- name: configure nagios services
+  copy: 
+    src: ansible-managed-services.cfg 
+    dest: /etc/nagios4/
+
+- name: create the nagios object files
+  template: 
+    src: "{{ item + '.j2' }}"
+    dest: /etc/nagios4/ansible-managed/{{ item }}
+  with_items:
+    - webservers.cfg
+    - dbservers.cfg
+    - lbservers.cfg
+  notify: restart nagios
+
+- name: Start nagios
+  service:
+    name: nagios4
+    state: started
+    enabled: yes
+
+- name: Autostart Nagios
+  shell: update-rc.d nagios4 defaults

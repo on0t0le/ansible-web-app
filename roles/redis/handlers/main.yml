@@ -1,0 +1,8 @@
+---
+# Handlers for HAproxy
+
+- name: restart redis-server
+  service: 
+    name: redis-server 
+    state: restarted
+

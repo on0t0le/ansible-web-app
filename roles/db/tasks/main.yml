@@ -1,0 +1,51 @@
+---
+# This role will install MySQL and create db user and give permissions
+
+- name: Set MySQL root password before installing
+  debconf:
+    name: 'mysql-server'
+    question: 'mysql-server/root_password'
+    value: '{{upassword | quote}}'
+    vtype: 'password'
+- name: Confirm MySQL root password before installing
+  debconf:
+    name: 'mysql-server'
+    question: 'mysql-server/root_password_again'
+    value: '{{upassword | quote}}'
+    vtype: 'password'
+- name: Install Mysql package
+  apt: 
+    name: ['mysql-server', 'python-mysqldb']
+    update_cache: true
+    state: present
+
+- name: Create Mysql configuration file
+  template: 
+    src: my.cnf.j2 
+    dest: /etc/mysql/my.cnf
+  notify:
+  - restart mysql
+
+- name: Start Mysql Service
+  service: 
+    name: mysql
+    state: started 
+    enabled: yes
+
+- name: Create Application Database
+  mysql_db: 
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: "{{ dbname }}"
+    state: present
+
+- name: Create Application DB User
+  mysql_user: 
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+    name: "{{ dbuser }}"
+    password: "{{ upassword }}"
+    priv: "*.*:ALL"
+    host: '%'
+    state: present
+
+- name: Autostart Mysql
+  shell: update-rc.d mysql defaults

@@ -1,0 +1,15 @@
+[webservers]
+ansible-web         ansible_become=yes  ansible_become_method=sudo
+ansible-web2        ansible_become=yes  ansible_become_method=sudo
+
+[dbservers]
+ansible-mysql       ansible_become=yes  ansible_become_method=sudo
+
+[lbservers]
+ansible-haproxy     ansible_become=yes  ansible_become_method=sudo
+
+[monitoring]
+ansible-nagios      ansible_become=yes  ansible_become_method=sudo
+
+[redis]
+ansible-redis       ansible_become=yes  ansible_become_method=sudo

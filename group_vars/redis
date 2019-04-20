@@ -1,0 +1,3 @@
+deb_name_redis_tools: "redis-tools_5.0.4-1_amd64.deb"
+deb_name_redis_server: "redis-server_5.0.4-1_amd64.deb"
+redis_host: "ansible-redis"
