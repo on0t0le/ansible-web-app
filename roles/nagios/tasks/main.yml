@@ -54,6 +54,11 @@
     src: ansible-managed-services.cfg 
     dest: /etc/nagios4/
 
+- name: configure nagios commands
+  copy:
+    src: commands.cfg
+    dest: /etc/nagios4/objects/commands.cfg
+
 - name: create the nagios object files
   template: 
     src: "{{ item + '.j2' }}"
@@ -64,11 +69,13 @@
     - lbservers.cfg
   notify: restart nagios
 
+- name: Fix error with logfiles
+  file:
+    path: /var/log/nagios4/spool/checkresults
+    state: directory
+
 - name: Start nagios
   service:
     name: nagios4
     state: started
     enabled: yes
-
-- name: Autostart Nagios
-  shell: update-rc.d nagios4 defaults
