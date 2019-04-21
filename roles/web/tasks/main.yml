@@ -3,22 +3,22 @@
   git: 
     repo: "{{ repository }}" 
     version: "{{ webapp_version }}" 
-    dest: "/var/www/html/app"
+    dest: "/var/www/html/app/"
     force: yes
 
 - name: Install packages 
   apt:
-    name: ['python-pip', 'libapache2-mod-python', 'python-mysqldb', 'screen']
+    name: ['python-pip', 'python-mysqldb', 'libapache2-mod-wsgi', 'python-dev']
     update_cache: true
     state: present
 
 - name: Install rpython requirements
   pip:
-    requirements: "/var/www/html/app/requirements.txt"
+    requirements: "/var/www/html/app/Aperture/requirements.txt"
 
 - name: Replace python file
   replace:
-    dest: /var/www/html/app/app.py
+    dest: /var/www/html/app/Aperture/__init__.py
     regexp: 'host="redis"'
     replace: host="{{ hostvars['ansible-redis']['ansible_default_ipv4']['address'] }}"
 
@@ -28,9 +28,18 @@
     state: directory
     mode: 0755
 
-- name: Start my web server
-  command: /usr/bin/screen -d -m sudo python /var/www/html/app/app.py
-  async: true
-  poll: 0 
-  environment:
-    NAME: "Aperture science computer aided enrichment center"
+- name: Configure the apache conf file with port
+  template: 
+    src: ports.conf.j2
+    dest: /etc/apache2/ports.conf
+  notify: restart apache2
+
+- name: Copy web-site conf file
+  template:
+    src: aperture.conf.j2
+    dest: /etc/apache2/sites-available/aperture.conf
+
+- name: Enable the site
+  command: a2ensite aperture.conf
+  notify: restart apache2
+
